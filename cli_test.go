@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/kr/pretty"
 	"github.com/posener/complete"
 )
 
@@ -767,6 +768,11 @@ func TestCLIAutocomplete_root(t *testing.T) {
 		{nil, "n", []string{"nodes", "noodles"}},
 		{nil, "noo", []string{"noodles"}},
 		{nil, "su", []string{"sub"}},
+		{nil, "de", []string{"deep"}},
+		{[]string{"deep"}, "t", []string{"three"}},
+		{[]string{"deep", "three"}, "", []string{"one", "two"}},
+		//{[]string{"deep", "three"}, "o", []string{"one"}},
+		//{[]string{"deep", "three"}, "t", []string{"two"}},
 
 		// Make sure global flags work on subcommands
 		{[]string{"sub"}, "-v", nil},
@@ -778,11 +784,13 @@ func TestCLIAutocomplete_root(t *testing.T) {
 			command := new(MockCommand)
 			cli := &CLI{
 				Commands: map[string]CommandFactory{
-					"foo":     func() (Command, error) { return command, nil },
-					"nodes":   func() (Command, error) { return command, nil },
-					"noodles": func() (Command, error) { return command, nil },
-					"sub one": func() (Command, error) { return command, nil },
-					"sub two": func() (Command, error) { return command, nil },
+					"foo":            func() (Command, error) { return command, nil },
+					"nodes":          func() (Command, error) { return command, nil },
+					"noodles":        func() (Command, error) { return command, nil },
+					"sub one":        func() (Command, error) { return command, nil },
+					"sub two":        func() (Command, error) { return command, nil },
+					"deep three one": func() (Command, error) { return command, nil },
+					"deep three two": func() (Command, error) { return command, nil },
 				},
 
 				Autocomplete: true,
@@ -799,7 +807,8 @@ func TestCLIAutocomplete_root(t *testing.T) {
 			sort.Strings(actual)
 
 			if !reflect.DeepEqual(actual, tc.Expected) {
-				t.Fatalf("bad prediction: %#v", actual)
+				t.Logf("Command structure: % #v", pretty.Formatter(cli.autocomplete.Command))
+				t.Fatalf("bad prediction: got %#v; want %#v", actual, tc.Expected)
 			}
 		})
 	}
